@@ -1,0 +1,1558 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>등호 저울 — 일차방정식 시각화 학습 도구</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Gowun+Dodum&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#FAF6EC;
+    --paper-edge:#E7DCC2;
+    --wood:#A6754A;
+    --wood-dark:#6B4226;
+    --wood-shadow:#523018;
+    --ink:#332B22;
+    --ink-soft:#6B6052;
+    --square:#C96A1F;
+    --square-dark:#9E5215;
+    --circle:#2F6FA8;
+    --circle-dark:#1F4F75;
+    --green:#3F8F5F;
+    --green-dark:#2E6E47;
+    --white:#FFFDF8;
+    --tagx-bg:#F0A35B;
+    --tagc-bg:#6FA3CC;
+    --warn:#B23A4E;
+    --warn-dark:#8A2A3A;
+    --radius-lg:22px;
+    --radius-md:14px;
+    --font-display:'Jua', sans-serif;
+    --font-body:'Gowun Dodum', sans-serif;
+    --font-mono:'JetBrains Mono', monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:radial-gradient(ellipse at top, #FFFCF4 0%, var(--paper) 55%, #F1E8D4 100%);
+    color:var(--ink);
+    font-family:var(--font-body);
+    min-height:100vh;
+    padding:18px 14px 60px;
+  }
+  .app-shell{max-width:780px;margin:0 auto;}
+  .topbar{text-align:center;margin-bottom:14px;}
+  .eyebrow{font-family:var(--font-mono);font-size:12px;letter-spacing:.14em;color:var(--ink-soft);text-transform:uppercase;}
+  h1{font-family:var(--font-display);font-size:clamp(26px,5vw,36px);margin:4px 0 6px;color:var(--ink);}
+  .subtitle{font-size:15px;color:var(--ink-soft);margin:0;line-height:1.55;}
+  .input-card{background:var(--white);border:2px solid var(--paper-edge);border-radius:var(--radius-lg);padding:18px 18px 16px;margin:18px 0;box-shadow:0 6px 0 var(--paper-edge);}
+  .input-row{display:flex;gap:10px;flex-wrap:wrap;}
+  .eq-input{flex:1 1 220px;font-family:var(--font-mono);font-size:19px;font-weight:700;padding:12px 14px;border:2px solid var(--paper-edge);border-radius:var(--radius-md);background:#FFFEFB;color:var(--ink);outline:none;transition:border-color .15s;}
+  .eq-input:focus{border-color:var(--circle);}
+  .btn{font-family:var(--font-display);font-size:16px;border:none;border-radius:var(--radius-md);padding:12px 20px;cursor:pointer;color:var(--white);transition:transform .08s ease, filter .15s;}
+  .btn:active{transform:translateY(2px);}
+  .btn:focus-visible{outline:3px solid var(--circle); outline-offset:2px;}
+  .btn-primary{background:var(--green); box-shadow:0 4px 0 var(--green-dark);}
+  .btn-primary:active{box-shadow:0 1px 0 var(--green-dark);}
+  .btn-ghost{background:transparent;color:var(--ink-soft);border:2px solid var(--paper-edge);box-shadow:none;}
+  .hint-text{font-size:12.5px;color:var(--ink-soft);margin-top:8px;line-height:1.6;}
+  .error-text{font-size:13px;color:var(--warn-dark);margin-top:8px;font-weight:700;min-height:1em;}
+  .legend{display:flex;flex-wrap:wrap;justify-content:center;gap:14px;margin:16px 0 8px;padding:10px 14px;background:rgba(255,255,255,0.55);border:1.5px dashed var(--paper-edge);border-radius:var(--radius-md);}
+  .legend-item{display:flex;align-items:center;gap:7px;font-size:13.5px;color:var(--ink-soft);}
+  .legend-icon{width:24px;height:24px;font-size:12px;flex:none;}
+  .step-tracker{display:flex;justify-content:space-between;gap:4px;margin:6px 0 18px;}
+  .step-item{flex:1;text-align:center;font-size:10px;font-family:var(--font-mono);font-weight:700;color:var(--ink-soft);padding:8px 2px;border-radius:10px;background:rgba(255,255,255,0.4);border:1.5px solid var(--paper-edge);}
+  .step-item.active{background:var(--circle);color:var(--white);border-color:var(--circle-dark);}
+  .step-item.done{background:#E4F1E8;color:var(--green-dark);border-color:var(--green);}
+  .scale-card{background:linear-gradient(180deg,#FFFEFB, #FBF4E5);border:2px solid var(--paper-edge);border-radius:var(--radius-lg);padding:26px 16px 18px;overflow:visible;}
+  .balance{display:flex;flex-direction:column;align-items:center;}
+  .beam-line{position:relative;width:88%;max-width:560px;height:12px;background:linear-gradient(180deg,#C28653,var(--wood));border-radius:8px;box-shadow:0 3px 0 var(--wood-shadow);transform-origin:50% 50%;}
+  .beam-line.bounce{animation:beamBounce .6s ease;}
+  @keyframes beamBounce{0%{transform:rotate(0deg) translateY(0);}25%{transform:rotate(-1.2deg) translateY(-1px);}55%{transform:rotate(1deg) translateY(1px);}80%{transform:rotate(-.4deg);}100%{transform:rotate(0deg) translateY(0);}}
+  .equals-badge{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:42px;height:42px;background:var(--ink);color:var(--white);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:20px;border:3px solid var(--white);box-shadow:0 3px 0 rgba(0,0,0,.25);z-index:3;}
+  .pivot-stick{position:absolute;left:50%;top:100%;width:6px;height:30px;background:var(--wood-dark);transform:translateX(-50%);}
+  .pans-row{display:flex;justify-content:space-between;align-items:flex-start;width:88%;max-width:560px;margin-top:4px;}
+  .pan-col{width:46%;display:flex;flex-direction:column;align-items:center;}
+  .chain{width:2px;height:26px;background:var(--wood-dark);}
+  .pan-label{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-bottom:6px;min-height:24px;}
+  .tag{font-family:var(--font-mono);font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;color:var(--white);white-space:nowrap;}
+  .tag-x{background:var(--tagx-bg);}
+  .tag-c{background:var(--tagc-bg);}
+  .pan{width:100%;min-height:108px;background:linear-gradient(180deg,#FBEFD9,#F3E0BB);border:3px solid var(--wood-dark);border-top:5px solid var(--wood);border-radius:10px 10px 38px 38px;padding:10px 8px;box-shadow:inset 0 3px 8px rgba(107,66,38,0.18), 0 5px 0 var(--wood-shadow);}
+  .pan-inner{display:flex;flex-wrap:wrap;gap:6px;align-content:flex-start;justify-content:center;min-height:34px;}
+  .pan-inner.pulse{animation:panPulse .3s ease;}
+  @keyframes panPulse{0%{transform:scale(1);}50%{transform:scale(1.06);}100%{transform:scale(1);}}
+  .group{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;}
+  .group.brackets{flex-basis:100%;margin-top:6px;padding-top:6px;border-top:1px dashed rgba(107,66,38,0.25);}
+  .deal-slots{display:none;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:10px;padding-top:10px;border-top:2px dashed var(--paper-edge);width:100%;}
+  .stand{margin-top:14px;display:flex;flex-direction:column;align-items:center;}
+  .stand-post{width:14px;height:54px;background:linear-gradient(90deg,#7A5232,var(--wood),#7A5232);}
+  .stand-base{width:160px;height:16px;background:linear-gradient(180deg,var(--wood),var(--wood-dark));border-radius:6px;box-shadow:0 4px 0 var(--wood-shadow);}
+  .manip{position:relative;width:30px;height:30px;border-radius:8px;background:var(--square);color:var(--white);font-family:var(--font-mono);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 0 var(--square-dark), inset 0 -2px 4px rgba(0,0,0,.12);text-shadow:0 1px 1px rgba(0,0,0,.25);flex:none;}
+  .manip.circle{border-radius:50%;background:var(--circle);box-shadow:0 2px 0 var(--circle-dark), inset 0 -2px 4px rgba(0,0,0,.12);font-size:16px;}
+  .manip.labeled{width:auto;min-width:46px;padding:0 9px;border-radius:10px;font-size:12px;}
+  .manip.pop-in{animation:popIn .4s cubic-bezier(.34,1.56,.64,1);}
+  @keyframes popIn{0%{transform:scale(0); opacity:0;}70%{transform:scale(1.15); opacity:1;}100%{transform:scale(1);}}
+  .manip.draggable{cursor:grab;}
+  .manip.draggable:active{cursor:grabbing;}
+  .manip.drag-source-hidden{opacity:0.22;}
+  .drag-ghost{opacity:0.9;box-shadow:0 8px 16px rgba(0,0,0,.32);}
+  .square-box, .circle-group-box{display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px;border:2px dashed #C9B98C;border-radius:12px;background:rgba(255,255,255,0.4);}
+  .circle-group-box{max-width:130px;min-width:60px;min-height:60px;}
+  .circle-group-box.drag-over{border-color:var(--green); background:rgba(63,143,95,0.14); box-shadow:0 0 0 3px rgba(63,143,95,0.25);}
+  .group.circle-pool.drag-over{outline:2px dashed var(--circle); outline-offset:6px; border-radius:12px;}
+  .idx-badge{font-family:var(--font-mono);font-size:12px;color:var(--ink-soft);font-weight:700;}
+  .bracket-box{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 10px;border:2.5px dashed var(--square-dark);border-radius:14px;background:rgba(201,106,31,0.08);cursor:pointer;transition:transform .15s, opacity .25s, background .15s;}
+  .bracket-box:hover{transform:scale(1.05); background:rgba(201,106,31,0.17);}
+  .bracket-box:focus-visible{outline:3px solid var(--circle); outline-offset:2px;}
+  .bracket-box.opening{opacity:0; transform:scale(1.3);}
+  .bracket-box.place-piece{cursor:grab;}
+  .bracket-box.static-piece{cursor:default;}
+  .bracket-box.static-piece:hover{transform:none; background:rgba(201,106,31,0.08);}
+  .bracket-label{font-family:var(--font-mono);font-weight:800;font-size:13px;color:var(--square-dark);}
+  .bracket-inner{display:flex;flex-wrap:wrap;gap:4px;justify-content:center;max-width:150px;}
+  .bracket-hint{font-family:var(--font-mono);font-size:10px;color:var(--ink-soft);}
+  .tray-card{margin:18px 0;background:var(--white);border:2.5px dashed var(--paper-edge);border-radius:var(--radius-lg);padding:16px 18px;display:none;}
+  .tray-title{font-family:var(--font-mono);font-size:11px;letter-spacing:.08em;color:var(--ink-soft);margin-bottom:10px;font-weight:700;text-transform:uppercase;}
+  .tray-box{display:flex;flex-wrap:wrap;gap:10px;min-height:50px;}
+  .tray-box.drag-over{outline:2px dashed var(--ink-soft); outline-offset:6px; border-radius:12px;}
+  .guide-panel{display:flex;gap:12px;align-items:flex-start;margin:22px 0 6px;padding:14px 16px;background:#FFFDF6;border:2px solid var(--paper-edge);border-radius:var(--radius-lg);}
+  .guide-avatar{flex:none;width:42px;height:42px;border-radius:50%;background:var(--wood);display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 3px 0 var(--wood-shadow);}
+  .guide-text{font-size:15.5px;line-height:1.65;color:var(--ink);}
+  .feedback-msg{font-size:13.5px;font-weight:700;color:var(--warn-dark);margin-top:6px;min-height:1.4em;}
+  .manip-panel{display:none;flex-wrap:wrap;gap:12px;margin:14px 0 4px;justify-content:center;}
+  .tool-btn{display:flex;flex-direction:column;align-items:center;gap:6px;background:#FFFEFB;border:2.5px solid var(--paper-edge);border-radius:14px;padding:10px 16px;cursor:pointer;}
+  .tool-btn:hover{border-color:var(--circle);}
+  .tool-btn:active{transform:translateY(2px);}
+  .tool-btn:focus-visible{outline:3px solid var(--circle); outline-offset:2px;}
+  .tool-label{font-family:var(--font-mono);font-size:12px;color:var(--ink-soft);font-weight:700;white-space:nowrap;}
+  .clear-input-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:center;}
+  .clear-input{font-family:var(--font-mono);font-size:18px;font-weight:700;padding:10px 12px;border:2px solid var(--paper-edge);border-radius:var(--radius-md);width:110px;text-align:center;background:#FFFEFB;color:var(--ink);}
+  .clear-input:focus{border-color:var(--circle); outline:none;}
+  .notebook-card{margin:22px 0;background:repeating-linear-gradient(#FFFEFA 0 33px, #EFE6D2 33px 34px);border:2px solid var(--paper-edge);border-left:5px solid var(--warn);border-radius:10px;padding:16px 18px;}
+  .notebook-title{font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;color:var(--ink-soft);text-transform:uppercase;margin-bottom:6px;}
+  .eq-line{font-family:var(--font-mono);font-size:18px;font-weight:700;color:var(--ink);padding:4px 2px;}
+  .eq-arrow{text-align:center;color:var(--ink-soft);font-size:14px;}
+  .result-banner{display:none;margin:22px 0;padding:22px;text-align:center;background:linear-gradient(135deg,#E4F1E8,#D6EEDC);border:2.5px solid var(--green);border-radius:var(--radius-lg);}
+  .result-banner .big{font-family:var(--font-display);font-size:32px;color:var(--green-dark);}
+  .result-banner .sub{font-size:14px;color:var(--ink-soft);margin-top:6px;}
+  .controls-row{display:flex;justify-content:center;margin-top:14px;}
+  @media (max-width:480px){
+    .manip{width:25px;height:25px;font-size:11px;}
+    .pan{min-height:92px;}
+    h1{font-size:24px;}
+    .eq-line{font-size:14px;}
+    .step-item{font-size:8.5px;padding:6px 1px;}
+  }
+  @media (prefers-reduced-motion: reduce){
+    .manip.pop-in, .beam-line.bounce, .pan-inner.pulse{animation:none !important;}
+  }
+</style>
+</head>
+<body>
+<div class="app-shell">
+
+  <div class="topbar">
+    <div class="eyebrow">balance · equality · x</div>
+    <h1>등호 저울</h1>
+    <p class="subtitle">일차방정식을 네모(미지수)와 동그라미(상수)로 직접 저울에 올려놓고,<br>등호의 원리로 만지면서 풀어봐요.</p>
+  </div>
+
+  <div class="input-card">
+    <div class="input-row">
+      <input type="text" id="eqInput" class="eq-input" placeholder="예: 1/2(x+3)=1/4x+5" autocomplete="off" />
+      <button class="btn btn-primary" id="startBtn">문제 만들기</button>
+    </div>
+    <div class="error-text" id="inputError" role="alert"></div>
+    <div class="hint-text">문제를 만들면 재료 모음에서 직접 드래그해서 저울에 올려 식 만들기부터 시작해요.</div>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><div class="manip square legend-icon">x</div><span>+x</span></div>
+    <div class="legend-item"><div class="manip square legend-icon">-x</div><span>−x</span></div>
+    <div class="legend-item"><div class="manip circle legend-icon"></div><span>+1</span></div>
+    <div class="legend-item"><div class="manip circle legend-icon">−</div><span>−1</span></div>
+  </div>
+
+  <div class="step-tracker" id="stepTracker">
+    <div class="step-item">① 식 만들기</div>
+    <div class="step-item">② 단정하게 정수로 바꾸기</div>
+    <div class="step-item">③ 방해되는 괄호 풀기</div>
+    <div class="step-item">④ 이항해서 정리하기</div>
+    <div class="step-item">⑤ 계수로 나누기</div>
+    <div class="step-item">⑥ 해 확인하기</div>
+  </div>
+
+  <div class="scale-card">
+    <div class="balance">
+      <div class="beam-line" id="beam">
+        <div class="equals-badge">=</div>
+        <div class="pivot-stick"></div>
+      </div>
+      <div class="pans-row">
+        <div class="pan-col">
+          <div class="pan-label">
+            <span class="tag tag-x" id="leftXTag">미지수 항</span>
+            <span class="tag tag-c" id="leftCTag">상수항</span>
+          </div>
+          <div class="chain"></div>
+          <div class="pan">
+            <div class="pan-inner" id="leftInner">
+              <div class="group" id="leftSquares"></div>
+              <div class="group" id="leftCircles"></div>
+              <div class="group brackets" id="leftBrackets"></div>
+            </div>
+          </div>
+        </div>
+        <div class="pan-col">
+          <div class="pan-label">
+            <span class="tag tag-x" id="rightXTag">미지수 항</span>
+            <span class="tag tag-c" id="rightCTag">상수항</span>
+          </div>
+          <div class="chain"></div>
+          <div class="pan">
+            <div class="pan-inner" id="rightInner">
+              <div class="group" id="rightSquares"></div>
+              <div class="group circle-pool" id="rightCircles"></div>
+              <div class="group brackets" id="rightBrackets"></div>
+              <div class="deal-slots" id="rightDealSlots"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="stand">
+        <div class="stand-post"></div>
+        <div class="stand-base"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tray-card" id="trayCard">
+    <div class="tray-title">재료 모음 — 저울 위로 드래그해서 올려보세요</div>
+    <div class="tray-box" id="trayBox"></div>
+  </div>
+
+  <div class="guide-panel">
+    <div class="guide-avatar">⚖️</div>
+    <div>
+      <div class="guide-text" id="guideText">위에 일차방정식을 입력하고 <strong>문제 만들기</strong>를 눌러보세요!</div>
+      <div class="feedback-msg" id="feedbackMsg"></div>
+    </div>
+  </div>
+
+  <div class="manip-panel" id="manipPanel"></div>
+
+  <div class="notebook-card" id="notebookCard" style="display:none;">
+    <div class="notebook-title">식이 변하는 과정</div>
+    <div id="notebook"></div>
+  </div>
+
+  <div class="result-banner" id="resultBanner">
+    <div class="big" id="resultText">🎉 x = 8</div>
+    <div class="sub">양쪽에 같은 일을 해서, 저울의 균형을 유지하며 답을 찾았어요!</div>
+  </div>
+
+  <div class="controls-row">
+    <button class="btn btn-ghost" id="resetBtn">새 문제 풀기</button>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  const els = {
+    eqInput: document.getElementById('eqInput'),
+    startBtn: document.getElementById('startBtn'),
+    inputError: document.getElementById('inputError'),
+    stepTracker: document.getElementById('stepTracker'),
+    beam: document.getElementById('beam'),
+    leftXTag: document.getElementById('leftXTag'),
+    leftCTag: document.getElementById('leftCTag'),
+    rightXTag: document.getElementById('rightXTag'),
+    rightCTag: document.getElementById('rightCTag'),
+    leftInner: document.getElementById('leftInner'),
+    rightInner: document.getElementById('rightInner'),
+    leftSquares: document.getElementById('leftSquares'),
+    leftCircles: document.getElementById('leftCircles'),
+    rightSquares: document.getElementById('rightSquares'),
+    rightCircles: document.getElementById('rightCircles'),
+    leftBrackets: document.getElementById('leftBrackets'),
+    rightBrackets: document.getElementById('rightBrackets'),
+    rightDealSlots: document.getElementById('rightDealSlots'),
+    trayCard: document.getElementById('trayCard'),
+    trayBox: document.getElementById('trayBox'),
+    guideText: document.getElementById('guideText'),
+    feedbackMsg: document.getElementById('feedbackMsg'),
+    manipPanel: document.getElementById('manipPanel'),
+    notebookCard: document.getElementById('notebookCard'),
+    notebook: document.getElementById('notebook'),
+    resultBanner: document.getElementById('resultBanner'),
+    resultText: document.getElementById('resultText'),
+    resetBtn: document.getElementById('resetBtn'),
+  };
+
+  let state = null;
+  let dealState = null;
+  let placeState = null;
+  let dragCtx = null;
+  let stateGen = 0;
+
+  // All deferred phase-transitions go through here so that starting a new
+  // equation (or resetting) immediately invalidates any pending callbacks
+  // from the previous equation, instead of letting them fire later and
+  // corrupt the new state.
+  function scheduleGen(fn, ms){
+    const gen = stateGen;
+    setTimeout(()=>{ if(gen===stateGen) fn(); }, ms);
+  }
+
+  // ---------- generic helpers ----------
+  function gcd(a,b){a=Math.abs(a);b=Math.abs(b); while(b){const t=b; b=a%b; a=t;} return a||1;}
+  function circledNum(n){const map=['①','②','③','④','⑤','⑥','⑦','⑧','⑨','⑩']; return map[n-1]||('('+n+')');}
+  function shuffleArray(arr){for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1)); const t=arr[i]; arr[i]=arr[j]; arr[j]=t;} return arr;}
+  function isCleanInteger(v){ return Math.abs(v - Math.round(v)) < 1e-9; }
+
+  function formatNumPlain(n){
+    if(Object.is(n,-0)) n=0;
+    if(Number.isInteger(n)) return String(n);
+    const r = Math.round(n*1000)/1000;
+    return Object.is(r,-0) ? '0' : String(r);
+  }
+
+  // Formats a non-negative magnitude, preserving whether it was originally
+  // typed as a fraction ("1/2") or a decimal ("0.5") — never silently
+  // converts one style into the other.
+  function formatMagnitudeStyled(absValue, style, frac){
+    if(Number.isInteger(absValue)) return String(absValue);
+    if(style==='fraction' && frac) return frac.num + '/' + frac.den;
+    return formatNumPlain(absValue);
+  }
+
+  function joinSide(x,c){
+    let out='';
+    if(x!==0){
+      out += (x<0?'-':'') + (Math.abs(x)===1 ? 'x' : formatNumPlain(Math.abs(x))+'x');
+    }
+    if(c!==0){
+      if(out===''){
+        out += (c<0?'-':'') + formatNumPlain(Math.abs(c));
+      } else {
+        out += (c<0 ? ' - ' : ' + ') + formatNumPlain(Math.abs(c));
+      }
+    }
+    return out===''? '0' : out;
+  }
+
+  // Formats a side that may still contain un-expanded bracket boxes and/or
+  // fraction/decimal-styled plain terms (used before parentheses are popped
+  // and before fractions/decimals are cleared to integers).
+  // pxInfo/pcInfo: {value, style, frac}
+  function formatGeneralSide(pxInfo, pcInfo, boxes){
+    const terms=[];
+    if(pxInfo.value!==0){
+      const body = (Number.isInteger(pxInfo.value) && Math.abs(pxInfo.value)===1) ? 'x' : formatMagnitudeStyled(Math.abs(pxInfo.value), pxInfo.style, pxInfo.frac)+'x';
+      terms.push({sign: pxInfo.value<0?-1:1, body});
+    }
+    boxes.forEach(b=>{
+      const magStr = (Number.isInteger(b.mult) && Math.abs(b.mult)===1) ? '' : formatMagnitudeStyled(Math.abs(b.mult), b.multStyle, b.multFrac);
+      terms.push({sign: b.sign<0?-1:1, body: magStr+'('+joinSide(b.innerX,b.innerC)+')'});
+    });
+    if(pcInfo.value!==0){
+      terms.push({sign: pcInfo.value<0?-1:1, body: formatMagnitudeStyled(Math.abs(pcInfo.value), pcInfo.style, pcInfo.frac)});
+    }
+    if(terms.length===0) return '0';
+    let out='';
+    terms.forEach((t,i)=>{
+      out += i===0 ? (t.sign<0?'-':'')+t.body : (t.sign<0?' - ':' + ')+t.body;
+    });
+    return out;
+  }
+
+  function flatToString(flat){
+    if(flat.length===0) return '0';
+    let out='';
+    flat.forEach((t,i)=>{
+      const sign = t.val<0 ? '-':'+';
+      const mag = Math.abs(t.val);
+      const body = t.type==='x' ? (mag===1?'x':formatNumPlain(mag)+'x') : formatNumPlain(mag);
+      out += i===0 ? (sign==='-'?'-':'')+body : ' '+sign+' '+body;
+    });
+    return out;
+  }
+
+  // ---------- parsing ----------
+  function parseNum(str){
+    if(str.indexOf('/')>=0){
+      const parts = str.split('/');
+      return parseFloat(parts[0])/parseFloat(parts[1]);
+    }
+    return parseFloat(str);
+  }
+
+  // Parses a numeric literal and remembers whether it was written as a
+  // fraction, a decimal, or a plain integer, so later display can stay
+  // faithful to what the student actually typed.
+  function parseNumWithStyle(str){
+    if(str.indexOf('/')>=0){
+      const parts = str.split('/');
+      const num = parseInt(parts[0],10), den = parseInt(parts[1],10);
+      const g = gcd(num,den);
+      return {value: num/den, style:'fraction', frac:{num:num/g, den:den/g}};
+    }
+    if(str.indexOf('.')>=0){
+      return {value: parseFloat(str), style:'decimal', frac:null};
+    }
+    return {value: parseFloat(str), style:'integer', frac:null};
+  }
+
+  function splitTopLevelTerms(s){
+    if(s[0]!=='+' && s[0]!=='-') s='+'+s;
+    const out=[];
+    let depth=0, cur='';
+    for(let i=0;i<s.length;i++){
+      const ch=s[i];
+      if(ch==='(') depth++;
+      if(ch===')') depth--;
+      if(depth===0 && (ch==='+'||ch==='-') && cur!==''){
+        out.push(cur);
+        cur=ch;
+      } else {
+        cur+=ch;
+      }
+    }
+    if(cur) out.push(cur);
+    return out;
+  }
+
+  const NUM_RE = '(?:\\d+\\/\\d+|\\d+\\.\\d+|\\d+)';
+
+  function parseTerm(raw){
+    const sign = raw[0]==='-' ? -1 : 1;
+    const rest = raw.slice(1);
+    let m = rest.match(new RegExp('^('+NUM_RE+')?\\((.*)\\)$'));
+    if(m){
+      const coeffRaw = m[1] || '';
+      const pc = coeffRaw ? parseNumWithStyle(coeffRaw) : {value:1, style:'integer', frac:null};
+      const coeffMag = pc.value;
+      const innerStr = m[2];
+      if(innerStr.indexOf('(')>=0){ const e=new Error('NESTED_PAREN'); throw e; }
+      const innerTerms = splitTopLevelTerms(innerStr).map(parseTerm);
+      let ix=0, ic=0;
+      innerTerms.forEach(t=>{ix+=t.x; ic+=t.c;});
+      const outerCoeff = sign*coeffMag;
+      return {kind:'paren', sign, coeffMag, coeffRaw, coeffStyle:pc.style, coeffFrac:pc.frac, innerX:ix, innerC:ic, innerTerms, x: ix*outerCoeff, c: ic*outerCoeff};
+    }
+    m = rest.match(new RegExp('^('+NUM_RE+')?x$'));
+    if(m){
+      const coeffRaw = m[1] || '';
+      const pc = coeffRaw ? parseNumWithStyle(coeffRaw) : {value:1, style:'integer', frac:null};
+      return {kind:'x', sign, coeffMag:pc.value, coeffRaw, coeffStyle:pc.style, coeffFrac:pc.frac, x: pc.value*sign, c:0};
+    }
+    m = rest.match(new RegExp('^'+NUM_RE+'$'));
+    if(m){
+      const pm = parseNumWithStyle(rest);
+      return {kind:'c', sign, mag:pm.value, magRaw: rest, magStyle:pm.style, magFrac:pm.frac, x:0, c: pm.value*sign};
+    }
+    const e = new Error('BAD_TERM'); throw e;
+  }
+
+  function parseSide(str){
+    const termStrs = splitTopLevelTerms(str);
+    const terms = termStrs.map(parseTerm);
+    let x=0,c=0;
+    terms.forEach(t=>{x+=t.x;c+=t.c;});
+    return {terms, x, c};
+  }
+
+  function parseEquation(raw){
+    let s = raw.toLowerCase().replace(/\s+/g,'').replace(/[*×]/g,'');
+    if(!s) return {error:'EMPTY'};
+    const eqCount = (s.match(/=/g)||[]).length;
+    if(eqCount!==1) return {error:'EQ_COUNT'};
+    const parts = s.split('=');
+    const leftStr=parts[0], rightStr=parts[1];
+    if(!leftStr || !rightStr) return {error:'EMPTY_SIDE'};
+    let depth=0;
+    for(let i=0;i<s.length;i++){ const ch=s[i]; if(ch==='(')depth++; if(ch===')')depth--; if(depth<0) return {error:'PAREN_MISMATCH'}; }
+    if(depth!==0) return {error:'PAREN_MISMATCH'};
+    try{
+      const left = parseSide(leftStr);
+      const right = parseSide(rightStr);
+      return {ok:true, left, right};
+    }catch(e){
+      return {error: (e && e.message)==='NESTED_PAREN' ? 'NESTED_PAREN' : 'BAD_TERM'};
+    }
+  }
+
+  function errMsg(code){
+    switch(code){
+      case 'EMPTY': return '방정식을 입력해주세요. 예: 1/2(x+3)=1/4x+5';
+      case 'EQ_COUNT': return '등호(=)가 정확히 한 번 들어가야 해요.';
+      case 'EMPTY_SIDE': return '등호 양쪽에 모두 식이 있어야 해요.';
+      case 'PAREN_MISMATCH': return '괄호 짝이 맞지 않아요. 다시 확인해주세요.';
+      case 'NESTED_PAREN': return '괄호 안에 괄호가 또 있는 식은 아직 지원하지 않아요.';
+      case 'BAD_TERM': return '형식을 확인해주세요. 예: 1/2(x+3)=1/4x+5';
+      case 'NO_X': return 'x가 포함된 식을 입력해주세요.';
+      case 'COEF_RANGE': return '드래그로 옮기기엔 숫자가 너무 커요. 12 이하로 만들어 주세요.';
+      case 'PAREN_COEF_RANGE': return '괄호 앞의 계수는 6 이하로 만들어 주세요.';
+      default: return '식을 다시 확인해주세요.';
+    }
+  }
+
+  function validateParsed(parsed){
+    const L=parsed.left, R=parsed.right;
+    if(L.x===0 && R.x===0) return errMsg('NO_X');
+    const vals=[L.x,L.c,R.x,R.c];
+    if(vals.some(v=>Math.abs(v)>12)) return errMsg('COEF_RANGE');
+    const allTerms = L.terms.concat(R.terms);
+    if(allTerms.some(t=>t.kind==='paren' && Math.abs(t.coeffMag)>6)) return errMsg('PAREN_COEF_RANGE');
+    return null;
+  }
+
+  function termOriginalBody(t){
+    if(t.kind==='paren') return t.coeffRaw + '(' + sideOriginalString(t.innerTerms) + ')';
+    if(t.kind==='x') return t.coeffRaw + 'x';
+    return t.magRaw;
+  }
+  function sideOriginalString(terms){
+    let out='';
+    terms.forEach((t,i)=>{
+      const sign = t.sign<0 ? '-':'+';
+      const body = termOriginalBody(t);
+      out += i===0 ? (sign==='-'?'-':'')+body : ' '+sign+' '+body;
+    });
+    return out || '0';
+  }
+
+  function expandSide(terms){
+    const flat=[];
+    terms.forEach(t=>{
+      if(t.x!==0) flat.push({type:'x', val:t.x});
+      if(t.c!==0) flat.push({type:'c', val:t.c});
+    });
+    return flat;
+  }
+  function typeCounts(flat){
+    let xCount=0,cCount=0;
+    flat.forEach(t=> t.type==='x' ? xCount++ : cCount++);
+    return {xCount,cCount};
+  }
+
+  // ---------- manipulative rendering ----------
+  // Formats a bracket's "×N" / "−N" corner label: avoids the awkward
+  // "−×1/3" combination by only using the × symbol for a positive multiplier.
+  function bracketLabelText(sign, mult, style, frac){
+    const hasMult = mult!==1;
+    if(!hasMult && sign>=0) return '';
+    if(sign<0 && hasMult) return '−' + formatMagnitudeStyled(mult, style, frac);
+    if(sign<0) return '−';
+    return '×' + formatMagnitudeStyled(mult, style, frac);
+  }
+
+  function createManip(type, neg, popIn){
+    const d=document.createElement('div');
+    d.className='manip '+type+(popIn?' pop-in':'');
+    if(type==='square') d.textContent = neg ? '-x' : 'x';
+    else d.textContent = neg ? '−' : '';
+    return d;
+  }
+  function createLabeledManip(type, signedValue, style, frac){
+    const d=document.createElement('div');
+    d.className='manip labeled '+type;
+    const sign = signedValue<0 ? '-' : '';
+    d.textContent = sign + formatMagnitudeStyled(Math.abs(signedValue), style, frac) + (type==='square'?'x':'');
+    return d;
+  }
+  function renderTermGroup(container, type, value, style, frac){
+    container.innerHTML='';
+    if(value===0) return;
+    if(Number.isInteger(value) && Math.abs(value)<=20){
+      for(let i=0;i<Math.abs(value);i++) container.appendChild(createManip(type, value<0, false));
+    } else {
+      container.appendChild(createLabeledManip(type, value, style, frac));
+    }
+  }
+  function toggleTag(el, show){ el.style.display = show ? 'inline-flex' : 'none'; }
+
+  // ---------- pointer-based drag & drop (generalized: mouse + touch) ----------
+  function attachDrag(el, onDropCallback, findTargetFn){
+    el.style.touchAction='none';
+    el.addEventListener('pointerdown', (e)=>{
+      if(dragCtx) return;
+      e.preventDefault();
+      const rect = el.getBoundingClientRect();
+      const ghost = el.cloneNode(true);
+      ghost.classList.add('drag-ghost');
+      ghost.style.position='fixed';
+      ghost.style.left = rect.left+'px';
+      ghost.style.top = rect.top+'px';
+      ghost.style.width = rect.width+'px';
+      ghost.style.height = rect.height+'px';
+      ghost.style.margin='0';
+      ghost.style.pointerEvents='none';
+      ghost.style.zIndex='999';
+      document.body.appendChild(ghost);
+      el.classList.add('drag-source-hidden');
+      dragCtx = {
+        offsetX: e.clientX-rect.left,
+        offsetY: e.clientY-rect.top,
+        ghost,
+        findTargetFn,
+        onDropCallback,
+      };
+      window.addEventListener('pointermove', onDragMove);
+      window.addEventListener('pointerup', onDragEnd, {once:true});
+    });
+  }
+
+  function onDragMove(e){
+    if(!dragCtx) return;
+    dragCtx.ghost.style.left = (e.clientX-dragCtx.offsetX)+'px';
+    dragCtx.ghost.style.top = (e.clientY-dragCtx.offsetY)+'px';
+    document.querySelectorAll('.drag-over').forEach(elx=>elx.classList.remove('drag-over'));
+    const target = dragCtx.findTargetFn(e.clientX, e.clientY);
+    if(target) target.el.classList.add('drag-over');
+  }
+
+  function onDragEnd(e){
+    window.removeEventListener('pointermove', onDragMove);
+    if(!dragCtx) return;
+    const target = dragCtx.findTargetFn(e.clientX, e.clientY);
+    document.querySelectorAll('.drag-over').forEach(elx=>elx.classList.remove('drag-over'));
+    if(dragCtx.ghost && dragCtx.ghost.parentNode) dragCtx.ghost.parentNode.removeChild(dragCtx.ghost);
+    const cb = dragCtx.onDropCallback;
+    dragCtx = null;
+    if(target) cb(target);
+  }
+
+  function cancelActiveDrag(){
+    if(dragCtx){
+      window.removeEventListener('pointermove', onDragMove);
+      if(dragCtx.ghost && dragCtx.ghost.parentNode) dragCtx.ghost.parentNode.removeChild(dragCtx.ghost);
+      dragCtx=null;
+    }
+  }
+
+  // ---------- PHASE 1: placement (drag pieces from tray onto the scale) ----------
+  function buildPlacementPieces(leftTerms, rightTerms){
+    const pieces=[];
+    let counter=0;
+
+    function processSide(terms){
+      const plain = terms.filter(t=>t.kind!=='paren');
+      const paren = terms.filter(t=>t.kind==='paren');
+      const xContributors = plain.filter(t=>t.kind==='x' && t.x!==0);
+      const cContributors = plain.filter(t=>t.kind==='c' && t.c!==0);
+      let px=0, pc=0;
+      plain.forEach(t=>{ px+=t.x; pc+=t.c; });
+
+      let pxStyle='integer', pxFrac=null;
+      if(xContributors.length===1){ pxStyle=xContributors[0].coeffStyle; pxFrac=xContributors[0].coeffFrac; }
+      else if(xContributors.length>1){ pxStyle='decimal'; }
+
+      let pcStyle='integer', pcFrac=null;
+      if(cContributors.length===1){ pcStyle=cContributors[0].magStyle; pcFrac=cContributors[0].magFrac; }
+      else if(cContributors.length>1){ pcStyle='decimal'; }
+
+      const required={};
+      const boxesInfo=[];
+      paren.forEach(t=>{
+        if(Number.isInteger(t.coeffMag)){
+          for(let i=0;i<t.coeffMag;i++) boxesInfo.push({sign:t.sign, innerX:t.innerX, innerC:t.innerC, mult:1, style:'integer', frac:null});
+        } else {
+          boxesInfo.push({sign:t.sign, innerX:t.innerX, innerC:t.innerC, mult:t.coeffMag, style:t.coeffStyle, frac:t.coeffFrac});
+        }
+      });
+      if(px!==0){
+        if(Number.isInteger(px)) required['square:'+(px<0?'-':'+')] = Math.abs(px);
+        else required['square:labeled:'+(px<0?'-':'+')+':'+Math.abs(px)] = 1;
+      }
+      if(pc!==0){
+        if(Number.isInteger(pc)) required['circle:'+(pc<0?'-':'+')] = Math.abs(pc);
+        else required['circle:labeled:'+(pc<0?'-':'+')+':'+Math.abs(pc)] = 1;
+      }
+      boxesInfo.forEach(b=>{
+        const sig = 'bracket:'+b.sign+':'+b.innerX+':'+b.innerC+':'+b.mult;
+        required[sig] = (required[sig]||0) + 1;
+      });
+      return {px, pc, pxStyle, pxFrac, pcStyle, pcFrac, boxesInfo, required};
+    }
+
+    const L = processSide(leftTerms);
+    const R = processSide(rightTerms);
+
+    function pushSide(info){
+      if(info.px!==0){
+        if(Number.isInteger(info.px)){
+          for(let i=0;i<Math.abs(info.px);i++) pieces.push({id:'p'+(counter++), kind:'square', sign:info.px<0?-1:1, location:'tray'});
+        } else {
+          pieces.push({id:'p'+(counter++), kind:'square', sign:info.px<0?-1:1, labeled:true, labelValue:Math.abs(info.px), labelStyle:info.pxStyle, labelFrac:info.pxFrac, location:'tray'});
+        }
+      }
+      if(info.pc!==0){
+        if(Number.isInteger(info.pc)){
+          for(let i=0;i<Math.abs(info.pc);i++) pieces.push({id:'p'+(counter++), kind:'circle', sign:info.pc<0?-1:1, location:'tray'});
+        } else {
+          pieces.push({id:'p'+(counter++), kind:'circle', sign:info.pc<0?-1:1, labeled:true, labelValue:Math.abs(info.pc), labelStyle:info.pcStyle, labelFrac:info.pcFrac, location:'tray'});
+        }
+      }
+      info.boxesInfo.forEach(b=>{
+        pieces.push({id:'p'+(counter++), kind:'bracket', sign:b.sign, innerX:b.innerX, innerC:b.innerC, mult:b.mult, multStyle:b.style, multFrac:b.frac, location:'tray'});
+      });
+    }
+    pushSide(L);
+    pushSide(R);
+    shuffleArray(pieces);
+
+    return {pieces, requiredLeft:L.required, requiredRight:R.required};
+  }
+
+  function pieceSignature(p){
+    if(p.kind==='bracket') return 'bracket:'+p.sign+':'+p.innerX+':'+p.innerC+':'+p.mult;
+    if(p.labeled) return p.kind+':labeled:'+(p.sign<0?'-':'+')+':'+p.labelValue;
+    return p.kind+':'+(p.sign<0?'-':'+');
+  }
+  function tallyBySignature(list){
+    const map={};
+    list.forEach(p=>{ const s=pieceSignature(p); map[s]=(map[s]||0)+1; });
+    return map;
+  }
+  function signaturesMatch(actual, required){
+    const keys = new Set(Object.keys(actual).concat(Object.keys(required)));
+    for(const k of keys){ if((actual[k]||0) !== (required[k]||0)) return false; }
+    return true;
+  }
+
+  function createPieceElement(p){
+    let el;
+    if(p.kind==='bracket'){
+      el=document.createElement('div');
+      el.className='bracket-box place-piece';
+      if((p.mult&&p.mult!==1) || p.sign<0){
+        const lbl=document.createElement('div');
+        lbl.className='bracket-label';
+        lbl.textContent = bracketLabelText(p.sign, p.mult||1, p.multStyle, p.multFrac);
+        el.appendChild(lbl);
+      }
+      const inner=document.createElement('div');
+      inner.className='bracket-inner';
+      if(p.innerX!==0){ const n=Math.min(Math.abs(p.innerX),6); for(let i=0;i<n;i++) inner.appendChild(createManip('square', p.innerX<0, false)); }
+      if(p.innerC!==0){ const n=Math.min(Math.abs(p.innerC),6); for(let i=0;i<n;i++) inner.appendChild(createManip('circle', p.innerC<0, false)); }
+      el.appendChild(inner);
+    } else if(p.labeled){
+      el = createLabeledManip(p.kind, p.sign<0?-p.labelValue:p.labelValue, p.labelStyle, p.labelFrac);
+    } else {
+      el = createManip(p.kind, p.sign<0, false);
+    }
+    el.classList.add('draggable');
+    return el;
+  }
+
+  function findPlaceDropTargetAt(x,y){
+    const el = document.elementFromPoint(x,y);
+    if(!el) return null;
+    if(el.closest('#leftInner')) return {el:els.leftInner, zone:'left'};
+    if(el.closest('#rightInner')) return {el:els.rightInner, zone:'right'};
+    if(el.closest('#trayBox')) return {el:els.trayBox, zone:'tray'};
+    return null;
+  }
+
+  function renderPlacement(){
+    els.trayBox.innerHTML='';
+    els.leftSquares.innerHTML=''; els.leftCircles.innerHTML=''; els.leftBrackets.innerHTML='';
+    els.rightSquares.innerHTML=''; els.rightCircles.innerHTML=''; els.rightBrackets.innerHTML='';
+    placeState.pieces.forEach(p=>{
+      const el = createPieceElement(p);
+      attachDrag(el, (target)=>{ p.location=target.zone; renderPlacement(); }, findPlaceDropTargetAt);
+      let container;
+      if(p.location==='tray') container = els.trayBox;
+      else if(p.location==='left') container = p.kind==='square' ? els.leftSquares : (p.kind==='circle' ? els.leftCircles : els.leftBrackets);
+      else container = p.kind==='square' ? els.rightSquares : (p.kind==='circle' ? els.rightCircles : els.rightBrackets);
+      container.appendChild(el);
+    });
+    toggleTag(els.leftXTag, placeState.pieces.some(p=>p.location==='left' && (p.kind==='square'||p.kind==='bracket')));
+    toggleTag(els.leftCTag, placeState.pieces.some(p=>p.location==='left' && (p.kind==='circle'||p.kind==='bracket')));
+    toggleTag(els.rightXTag, placeState.pieces.some(p=>p.location==='right' && (p.kind==='square'||p.kind==='bracket')));
+    toggleTag(els.rightCTag, placeState.pieces.some(p=>p.location==='right' && (p.kind==='circle'||p.kind==='bracket')));
+    checkPlacementProgress();
+  }
+
+  function checkPlacementProgress(){
+    const allPlaced = placeState.pieces.every(p=>p.location!=='tray');
+    if(!allPlaced){
+      const remaining = placeState.pieces.filter(p=>p.location==='tray').length;
+      setFeedback(remaining>0 ? ('재료 모음에 아직 ' + remaining + '개가 남아있어요. 저울 위로 드래그해보세요!') : '');
+      return;
+    }
+    const actualLeft = tallyBySignature(placeState.pieces.filter(p=>p.location==='left'));
+    const actualRight = tallyBySignature(placeState.pieces.filter(p=>p.location==='right'));
+    const ok = signaturesMatch(actualLeft, placeState.requiredLeft) && signaturesMatch(actualRight, placeState.requiredRight);
+    if(ok){
+      setFeedback('');
+      setGuide('완벽해요! 식 그대로 저울에 올렸어요. 🎉');
+      clearManipPanel();
+      scheduleGen(finishPlacement, 700);
+    } else {
+      setFeedback('아직 정확하지 않아요. 맨 처음 식을 다시 보면서, 양쪽에 놓인 네모·동그라미·괄호 묶음 개수를 맞춰보세요!');
+    }
+  }
+
+  function setupPlacement(parsed){
+    state.phase='place';
+    updateTracker('place');
+    const built = buildPlacementPieces(parsed.left.terms, parsed.right.terms);
+    placeState = {pieces: built.pieces, requiredLeft: built.requiredLeft, requiredRight: built.requiredRight};
+    els.trayCard.style.display='block';
+    renderPlacement();
+    bounceBeam();
+    setGuide('재료 모음에서 네모·동그라미·괄호 묶음을 <strong>드래그</strong>해서, 맨 위 식과 똑같이 양쪽 저울에 올려보세요!');
+    setFeedback('');
+    clearManipPanel();
+  }
+
+  function finishPlacement(){
+    els.trayCard.style.display='none';
+    cancelActiveDrag();
+    const leftPieces = placeState.pieces.filter(p=>p.location==='left');
+    const rightPieces = placeState.pieces.filter(p=>p.location==='right');
+
+    const leftSquarePieces = leftPieces.filter(p=>p.kind==='square');
+    const leftCirclePieces = leftPieces.filter(p=>p.kind==='circle');
+    const rightSquarePieces = rightPieces.filter(p=>p.kind==='square');
+    const rightCirclePieces = rightPieces.filter(p=>p.kind==='circle');
+
+    state.leftPlainX = sumSigned(leftSquarePieces);
+    state.leftPlainC = sumSigned(leftCirclePieces);
+    state.rightPlainX = sumSigned(rightSquarePieces);
+    state.rightPlainC = sumSigned(rightCirclePieces);
+
+    const lx = leftSquarePieces.find(p=>p.labeled);
+    state.leftPlainXStyle = lx ? lx.labelStyle : 'integer';
+    state.leftPlainXFrac = lx ? lx.labelFrac : null;
+    const lc = leftCirclePieces.find(p=>p.labeled);
+    state.leftPlainCStyle = lc ? lc.labelStyle : 'integer';
+    state.leftPlainCFrac = lc ? lc.labelFrac : null;
+    const rx = rightSquarePieces.find(p=>p.labeled);
+    state.rightPlainXStyle = rx ? rx.labelStyle : 'integer';
+    state.rightPlainXFrac = rx ? rx.labelFrac : null;
+    const rc = rightCirclePieces.find(p=>p.labeled);
+    state.rightPlainCStyle = rc ? rc.labelStyle : 'integer';
+    state.rightPlainCFrac = rc ? rc.labelFrac : null;
+
+    state.leftBoxes = leftPieces.filter(p=>p.kind==='bracket').map(p=>({id:p.id, sign:p.sign, mult:p.mult||1, multStyle:p.multStyle||'integer', multFrac:p.multFrac||null, innerX:p.innerX, innerC:p.innerC}));
+    state.rightBoxes = rightPieces.filter(p=>p.kind==='bracket').map(p=>({id:p.id, sign:p.sign, mult:p.mult||1, multStyle:p.multStyle||'integer', multFrac:p.multFrac||null, innerX:p.innerX, innerC:p.innerC}));
+
+    goToIntegerCheckOrNext();
+  }
+
+  function sumSigned(list){
+    return list.reduce((acc,p)=> acc + (p.labeled ? (p.sign<0?-p.labelValue:p.labelValue) : (p.sign<0?-1:1)), 0);
+  }
+
+  // ---------- PHASE 2: clear fractions/decimals (student picks the multiplier) ----------
+  function needsIntegerClear(){
+    const vals = [state.leftPlainX, state.leftPlainC, state.rightPlainX, state.rightPlainC];
+    state.leftBoxes.forEach(b=>vals.push(b.mult));
+    state.rightBoxes.forEach(b=>vals.push(b.mult));
+    return vals.some(v=>!isCleanInteger(v));
+  }
+
+  function goToIntegerCheckOrNext(){
+    if(needsIntegerClear()){
+      showClearFractionsStep();
+    } else {
+      proceedToExpandOrOrganize();
+    }
+  }
+
+  function showClearFractionsStep(){
+    state.phase='clear';
+    updateTracker('clear');
+    renderPansDuringExpand(false);
+    bounceBeam();
+    setGuide('이 식에는 분수나 소수가 있어요. 양쪽에 <strong>같은 수</strong>를 곱해서 모두 정수로 만들어볼까요? 어떤 수를 곱하면 좋을지 스스로 정해서 입력해보세요!');
+    setFeedback('');
+    renderClearFractionsUI();
+  }
+
+  function renderClearFractionsUI(){
+    els.manipPanel.innerHTML='';
+    els.manipPanel.style.display='flex';
+    const wrap=document.createElement('div');
+    wrap.className='clear-input-row';
+    const input=document.createElement('input');
+    input.type='number';
+    input.min='1';
+    input.step='1';
+    input.placeholder='곱할 수';
+    input.className='clear-input';
+    const btn=document.createElement('button');
+    btn.className='btn btn-primary';
+    btn.textContent='양쪽에 곱하기';
+    const submit=()=>{ tryApplyMultiplier(parseInt(input.value,10)); };
+    btn.addEventListener('click', submit);
+    input.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ e.preventDefault(); submit(); } });
+    wrap.appendChild(input);
+    wrap.appendChild(btn);
+    els.manipPanel.appendChild(wrap);
+  }
+
+  function tryApplyMultiplier(k){
+    if(!Number.isFinite(k) || !Number.isInteger(k) || k<1){
+      setFeedback('1 이상의 정수를 입력해주세요.');
+      return;
+    }
+    if(k>50){
+      setFeedback('너무 큰 수예요. 더 작은 수를 시도해보세요.');
+      return;
+    }
+    const nLX=state.leftPlainX*k, nLC=state.leftPlainC*k, nRX=state.rightPlainX*k, nRC=state.rightPlainC*k;
+    const nLMult = state.leftBoxes.map(b=>b.mult*k);
+    const nRMult = state.rightBoxes.map(b=>b.mult*k);
+    const allVals = [nLX,nLC,nRX,nRC].concat(nLMult, nRMult);
+    if(!allVals.every(isCleanInteger)){
+      setFeedback('아직 정수가 되지 않았어요. 다른 수를 시도해보세요!');
+      return;
+    }
+    if(allVals.some(v=>Math.abs(v)>40)){
+      setFeedback('그 수를 곱하면 숫자가 너무 커져요. 더 작은 수를 시도해보세요!');
+      return;
+    }
+    const leftXInfo = {value:state.leftPlainX, style:state.leftPlainXStyle, frac:state.leftPlainXFrac};
+    const leftCInfo = {value:state.leftPlainC, style:state.leftPlainCStyle, frac:state.leftPlainCFrac};
+    const rightXInfo = {value:state.rightPlainX, style:state.rightPlainXStyle, frac:state.rightPlainXFrac};
+    const rightCInfo = {value:state.rightPlainC, style:state.rightPlainCStyle, frac:state.rightPlainCFrac};
+    const opLine = formatGeneralSide(leftXInfo, leftCInfo, state.leftBoxes) + ' × ' + k + ' = ' + formatGeneralSide(rightXInfo, rightCInfo, state.rightBoxes) + ' × ' + k;
+    addEqLine(opLine);
+
+    state.leftPlainX = Math.round(nLX); state.leftPlainC = Math.round(nLC);
+    state.rightPlainX = Math.round(nRX); state.rightPlainC = Math.round(nRC);
+    state.leftPlainXStyle='integer'; state.leftPlainXFrac=null;
+    state.leftPlainCStyle='integer'; state.leftPlainCFrac=null;
+    state.rightPlainXStyle='integer'; state.rightPlainXFrac=null;
+    state.rightPlainCStyle='integer'; state.rightPlainCFrac=null;
+    state.leftBoxes = state.leftBoxes.map((b,i)=>({...b, mult:Math.round(nLMult[i]), multStyle:'integer', multFrac:null}));
+    state.rightBoxes = state.rightBoxes.map((b,i)=>({...b, mult:Math.round(nRMult[i]), multStyle:'integer', multFrac:null}));
+
+    addEqLine(formatGeneralSide({value:state.leftPlainX,style:'integer',frac:null}, {value:state.leftPlainC,style:'integer',frac:null}, state.leftBoxes) + ' = ' + formatGeneralSide({value:state.rightPlainX,style:'integer',frac:null}, {value:state.rightPlainC,style:'integer',frac:null}, state.rightBoxes));
+    setFeedback('');
+    setGuide('정수로 바뀌었어요! 🎉');
+    clearManipPanel();
+    renderPansDuringExpand(false);
+    pulsePans();
+    bounceBeam();
+    scheduleGen(proceedToExpandOrOrganize, 700);
+  }
+
+  // ---------- after placement (and any needed integer-clearing) is settled ----------
+  function proceedToExpandOrOrganize(){
+    const hasBoxes = state.leftBoxes.length>0 || state.rightBoxes.length>0;
+    if(hasBoxes){
+      state.phase='expand';
+      updateTracker('expand');
+      setGuide('이제 괄호 묶음을 <strong>직접 눌러서</strong> 풀어보세요! 괄호 안의 식이 그대로 꺼내져요.');
+      renderPansDuringExpand(true);
+      bounceBeam();
+    } else if(state.needCombineDisplay){
+      updateTracker('expand');
+      setGuide('같은 종류의 항끼리 정리해볼까요?');
+      renderPansDuringExpand(true);
+      bounceBeam();
+      scheduleGen(()=>{
+        addEqLine(joinSide(state.leftPlainX,state.leftPlainC) + ' = ' + joinSide(state.rightPlainX,state.rightPlainC));
+        state.leftA=state.leftPlainX; state.leftB=state.leftPlainC;
+        state.rightA=state.rightPlainX; state.rightB=state.rightPlainC;
+        renderPans();
+        goOrganizeOrDivide();
+      }, 700);
+    } else {
+      state.leftA=state.leftPlainX; state.leftB=state.leftPlainC;
+      state.rightA=state.rightPlainX; state.rightB=state.rightPlainC;
+      renderPans();
+      bounceBeam();
+      goOrganizeOrDivide();
+    }
+  }
+
+  // ---------- bracket popping (student-driven expansion) ----------
+  function renderBrackets(container, boxes, side, poppable){
+    container.innerHTML='';
+    boxes.forEach(box=>{
+      const el=document.createElement('div');
+      el.className='bracket-box' + (poppable?'':' static-piece');
+      if(poppable){ el.setAttribute('role','button'); el.setAttribute('tabindex','0'); }
+      if(box.mult!==1 || box.sign<0){
+        const lbl=document.createElement('div');
+        lbl.className='bracket-label';
+        lbl.textContent = bracketLabelText(box.sign, box.mult, box.multStyle, box.multFrac);
+        el.appendChild(lbl);
+      }
+      const inner=document.createElement('div');
+      inner.className='bracket-inner';
+      const ax=box.innerX, ac=box.innerC;
+      if(ax!==0){ const n=Math.min(Math.abs(ax),6); for(let i=0;i<n;i++) inner.appendChild(createManip('square', ax<0, false)); }
+      if(ac!==0){ const n=Math.min(Math.abs(ac),6); for(let i=0;i<n;i++) inner.appendChild(createManip('circle', ac<0, false)); }
+      el.appendChild(inner);
+      if(poppable){
+        const hint=document.createElement('div');
+        hint.className='bracket-hint';
+        hint.textContent='탭해서 풀기';
+        el.appendChild(hint);
+        const trigger=()=>unpackBox(side, box.id, el);
+        el.addEventListener('click', trigger);
+        el.addEventListener('keydown',(e)=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); trigger(); } });
+      }
+      container.appendChild(el);
+    });
+  }
+
+  function unpackBox(side, id, el){
+    if(el) el.classList.add('opening');
+    scheduleGen(()=>{
+      const boxes = side==='left' ? state.leftBoxes : state.rightBoxes;
+      const idx = boxes.findIndex(b=>b.id===id);
+      if(idx<0) return;
+      const box = boxes[idx];
+      const contribX = box.sign*box.mult*box.innerX;
+      const contribC = box.sign*box.mult*box.innerC;
+      boxes.splice(idx,1);
+      if(side==='left'){ state.leftPlainX+=contribX; state.leftPlainC+=contribC; }
+      else { state.rightPlainX+=contribX; state.rightPlainC+=contribC; }
+      renderPansDuringExpand(true);
+      pulsePans();
+      bounceBeam();
+      const remaining = state.leftBoxes.length+state.rightBoxes.length;
+      if(remaining===0){
+        setGuide('괄호를 다 풀었어요! 🎉');
+        scheduleGen(finishExpand, 600);
+      } else {
+        setGuide('잘했어요! 남은 괄호 묶음을 마저 눌러서 풀어보세요. (남은 묶음: ' + remaining + '개)');
+      }
+    }, 230);
+  }
+
+  function renderPansDuringExpand(poppable){
+    if(poppable===undefined) poppable=true;
+    renderTermGroup(els.leftSquares, 'square', state.leftPlainX, state.leftPlainXStyle, state.leftPlainXFrac);
+    renderTermGroup(els.leftCircles, 'circle', state.leftPlainC, state.leftPlainCStyle, state.leftPlainCFrac);
+    renderTermGroup(els.rightSquares, 'square', state.rightPlainX, state.rightPlainXStyle, state.rightPlainXFrac);
+    renderTermGroup(els.rightCircles, 'circle', state.rightPlainC, state.rightPlainCStyle, state.rightPlainCFrac);
+    renderBrackets(els.leftBrackets, state.leftBoxes, 'left', poppable);
+    renderBrackets(els.rightBrackets, state.rightBoxes, 'right', poppable);
+    const leftHasX = state.leftPlainX!==0 || state.leftBoxes.some(b=>b.innerX!==0);
+    const leftHasC = state.leftPlainC!==0 || state.leftBoxes.some(b=>b.innerC!==0);
+    const rightHasX = state.rightPlainX!==0 || state.rightBoxes.some(b=>b.innerX!==0);
+    const rightHasC = state.rightPlainC!==0 || state.rightBoxes.some(b=>b.innerC!==0);
+    toggleTag(els.leftXTag, leftHasX);
+    toggleTag(els.leftCTag, leftHasC);
+    toggleTag(els.rightXTag, rightHasX);
+    toggleTag(els.rightCTag, rightHasC);
+  }
+
+  function finishExpand(){
+    addEqLine(joinSide(state.leftPlainX, state.leftPlainC) + ' = ' + joinSide(state.rightPlainX, state.rightPlainC));
+    state.leftA=state.leftPlainX; state.leftB=state.leftPlainC;
+    state.rightA=state.rightPlainX; state.rightB=state.rightPlainC;
+    renderPans();
+    goOrganizeOrDivide();
+  }
+
+  // ---------- canonical (post-resolution) pan rendering ----------
+  function renderPans(){
+    renderTermGroup(els.leftSquares, 'square', state.leftA);
+    renderTermGroup(els.leftCircles, 'circle', state.leftB);
+    renderTermGroup(els.rightSquares, 'square', state.rightA);
+    renderTermGroup(els.rightCircles, 'circle', state.rightB);
+    els.leftBrackets.innerHTML='';
+    els.rightBrackets.innerHTML='';
+    els.rightDealSlots.style.display='none';
+    els.rightDealSlots.innerHTML='';
+    toggleTag(els.leftXTag, state.leftA!==0);
+    toggleTag(els.leftCTag, state.leftB!==0);
+    toggleTag(els.rightXTag, state.rightA!==0);
+    toggleTag(els.rightCTag, state.rightB!==0);
+  }
+
+  function renderGroupedSquares(divisor){
+    els.leftSquares.innerHTML='';
+    const neg = state.leftA<0;
+    for(let i=0;i<divisor;i++){
+      const box=document.createElement('div');
+      box.className='square-box';
+      box.appendChild(createManip('square', neg, true));
+      const idx=document.createElement('span');
+      idx.className='idx-badge';
+      idx.textContent=circledNum(i+1);
+      box.appendChild(idx);
+      els.leftSquares.appendChild(box);
+    }
+  }
+
+  function bounceBeam(){
+    els.beam.classList.remove('bounce');
+    void els.beam.offsetWidth;
+    els.beam.classList.add('bounce');
+  }
+  function pulsePans(){
+    [els.leftInner, els.rightInner].forEach(elx=>{
+      elx.classList.remove('pulse'); void elx.offsetWidth; elx.classList.add('pulse');
+    });
+  }
+
+  // ---------- notebook ----------
+  function clearNotebook(){ els.notebook.innerHTML=''; els.notebookCard.style.display='none'; }
+  function addEqLine(text){
+    els.notebookCard.style.display='block';
+    if(els.notebook.children.length>0){
+      const arrow=document.createElement('div');
+      arrow.className='eq-arrow';
+      arrow.textContent='↓';
+      els.notebook.appendChild(arrow);
+    }
+    const line=document.createElement('div');
+    line.className='eq-line';
+    line.textContent=text;
+    els.notebook.appendChild(line);
+  }
+
+  // ---------- guide / feedback ----------
+  function setGuide(html){ els.guideText.innerHTML = html; }
+  function setFeedback(text){ els.feedbackMsg.textContent = text; }
+  function clearManipPanel(){ els.manipPanel.innerHTML=''; els.manipPanel.style.display='none'; }
+
+  // ---------- step tracker ----------
+  function stageIndexFor(phase){
+    switch(phase){
+      case 'idle': return -1;
+      case 'built': return 0;
+      case 'place': return 0;
+      case 'clear': return 1;
+      case 'expand': return 2;
+      case 'organize': return 3;
+      case 'divide': return 4;
+      case 'solved': return 5;
+      default: return 0;
+    }
+  }
+  function updateTracker(phase){
+    const idx = stageIndexFor(phase);
+    Array.from(els.stepTracker.children).forEach((el,i)=>{
+      el.classList.toggle('active', i===idx);
+      el.classList.toggle('done', i<idx);
+    });
+  }
+
+  // ---------- start / parse flow ----------
+  function setInputError(msg){ els.inputError.textContent = msg; }
+
+  function handleStart(){
+    const raw = els.eqInput.value.trim();
+    const parsed = parseEquation(raw);
+    if(parsed.error){ setInputError(errMsg(parsed.error)); return; }
+    const err = validateParsed(parsed);
+    if(err){ setInputError(err); return; }
+    setInputError('');
+    startEquation(parsed);
+  }
+
+  function startEquation(parsed){
+    stateGen++;
+    cancelActiveDrag();
+    state = {
+      phase:'built',
+      leftPlainX:0, leftPlainC:0, rightPlainX:0, rightPlainC:0,
+      leftPlainXStyle:'integer', leftPlainXFrac:null,
+      leftPlainCStyle:'integer', leftPlainCFrac:null,
+      rightPlainXStyle:'integer', rightPlainXFrac:null,
+      rightPlainCStyle:'integer', rightPlainCFrac:null,
+      leftBoxes:[], rightBoxes:[],
+      leftA:0, leftB:0, rightA:0, rightB:0,
+      needCombineDisplay:false,
+      checkpointX:null, checkpointC:null,
+      solution:null,
+    };
+    dealState = null;
+    placeState = null;
+    clearNotebook();
+    clearManipPanel();
+    setFeedback('');
+    els.resultBanner.style.display='none';
+    els.leftSquares.innerHTML=''; els.leftCircles.innerHTML='';
+    els.rightSquares.innerHTML=''; els.rightCircles.innerHTML='';
+    els.leftBrackets.innerHTML=''; els.rightBrackets.innerHTML='';
+    els.rightDealSlots.innerHTML=''; els.rightDealSlots.style.display='none';
+    els.trayBox.innerHTML=''; els.trayCard.style.display='none';
+    toggleTag(els.leftXTag,false); toggleTag(els.leftCTag,false);
+    toggleTag(els.rightXTag,false); toggleTag(els.rightCTag,false);
+
+    addEqLine(sideOriginalString(parsed.left.terms) + ' = ' + sideOriginalString(parsed.right.terms));
+    updateTracker('built');
+
+    const leftFlat = expandSide(parsed.left.terms);
+    const rightFlat = expandSide(parsed.right.terms);
+    const lc = typeCounts(leftFlat), rc = typeCounts(rightFlat);
+    state.needCombineDisplay = lc.xCount>1 || lc.cCount>1 || rc.xCount>1 || rc.cCount>1;
+
+    setupPlacement(parsed);
+  }
+
+  // ---------- organize phase: all options shown together; student judges what to use ----------
+  function goOrganizeOrDivide(){
+    if(state.rightA!==0 || state.leftB!==0){
+      state.phase='organize';
+      updateTracker('organize');
+      state.checkpointX = {leftA:state.leftA, rightA:state.rightA};
+      state.checkpointC = {leftB:state.leftB, rightB:state.rightB};
+      renderOrganizeToolbox();
+      updateOrganizeGuide();
+      setFeedback('');
+    } else {
+      showDivideStep();
+    }
+  }
+
+  function renderOrganizeToolbox(){
+    els.manipPanel.innerHTML='';
+    els.manipPanel.style.display='flex';
+    const defs = [
+      {type:'square', delta:1, label:'양쪽에 네모 더하기'},
+      {type:'square', delta:-1, label:'양쪽에 네모 빼기'},
+      {type:'circle', delta:1, label:'양쪽에 동그라미 더하기'},
+      {type:'circle', delta:-1, label:'양쪽에 동그라미 빼기'},
+    ];
+    defs.forEach(d=>{
+      const btn=document.createElement('button');
+      btn.className='tool-btn';
+      btn.appendChild(createManip(d.type, d.delta<0, false));
+      const lbl=document.createElement('span');
+      lbl.className='tool-label';
+      lbl.textContent=d.label;
+      btn.appendChild(lbl);
+      btn.addEventListener('click', ()=>applyToolboxDelta(d.type, d.delta));
+      els.manipPanel.appendChild(btn);
+    });
+  }
+
+  function updateOrganizeGuide(){
+    const msgs=[];
+    if(state.rightA!==0) msgs.push('오른쪽 네모: ' + state.rightA + '개');
+    if(state.leftB!==0) msgs.push('왼쪽 동그라미: ' + state.leftB + '개');
+    const extra = msgs.length ? ('<br>아직 남은 것 → ' + msgs.join(' · ')) : '';
+    setGuide('네모·동그라미 버튼 중에서 <strong>스스로 판단해서</strong> 양쪽에 똑같이 올려보세요. 목표는 <strong>왼쪽엔 네모만, 오른쪽엔 동그라미만</strong> 남기는 거예요!' + extra);
+  }
+
+  function applyToolboxDelta(type, delta){
+    const newLeftA = type==='square' ? state.leftA+delta : state.leftA;
+    const newRightA = type==='square' ? state.rightA+delta : state.rightA;
+    const newLeftB = type==='circle' ? state.leftB+delta : state.leftB;
+    const newRightB = type==='circle' ? state.rightB+delta : state.rightB;
+    const cap=25;
+    if(Math.abs(newLeftA)>cap || Math.abs(newRightA)>cap || Math.abs(newLeftB)>cap || Math.abs(newRightB)>cap){
+      setFeedback('숫자가 너무 커졌어요! 반대 버튼으로 다시 줄여보세요.');
+      return;
+    }
+    state.leftA=newLeftA; state.rightA=newRightA; state.leftB=newLeftB; state.rightB=newRightB;
+    setFeedback('');
+    renderPans();
+    pulsePans();
+    bounceBeam();
+    if(type==='square' && state.rightA===0){
+      logEliminationEvent('x');
+    } else if(type==='circle' && state.leftB===0){
+      logEliminationEvent('c');
+    }
+    updateOrganizeGuide();
+    checkOrganizeFullyDone();
+  }
+
+  function deltaTermStr(delta, isX){
+    const mag = Math.abs(delta);
+    const body = isX ? (mag===1?'x':formatNumPlain(mag)+'x') : formatNumPlain(mag);
+    return (delta<0?'- ':'+ ') + body;
+  }
+
+  // Logs the explicit "+N"/"-N" operation the moment a target (right-side x, or left-side
+  // constant) reaches zero, using a per-type checkpoint so the line is correct no matter
+  // which order (or how interleaved) the student clicked the four buttons in.
+  function logEliminationEvent(kind){
+    let delta;
+    if(kind==='x') delta = state.leftA - state.checkpointX.leftA;
+    else delta = state.leftB - state.checkpointC.leftB;
+    if(delta===0){
+      if(kind==='x') state.checkpointX = {leftA:state.leftA, rightA:state.rightA};
+      else state.checkpointC = {leftB:state.leftB, rightB:state.rightB};
+      return;
+    }
+    let opLine;
+    if(kind==='x'){
+      const cp = state.checkpointX;
+      opLine = joinSide(cp.leftA, state.leftB) + ' ' + deltaTermStr(delta,true) + ' = ' + joinSide(cp.rightA, state.rightB) + ' ' + deltaTermStr(delta,true);
+      state.checkpointX = {leftA:state.leftA, rightA:state.rightA};
+    } else {
+      const cp = state.checkpointC;
+      opLine = joinSide(state.leftA, cp.leftB) + ' ' + deltaTermStr(delta,false) + ' = ' + joinSide(state.rightA, cp.rightB) + ' ' + deltaTermStr(delta,false);
+      state.checkpointC = {leftB:state.leftB, rightB:state.rightB};
+    }
+    addEqLine(opLine);
+    addEqLine(joinSide(state.leftA, state.leftB) + ' = ' + joinSide(state.rightA, state.rightB));
+    setFeedback('');
+  }
+
+  function checkOrganizeFullyDone(){
+    if(state.rightA===0 && state.leftB===0){
+      clearManipPanel();
+      setGuide('정리 완료! 왼쪽엔 네모만, 오른쪽엔 동그라미만 남았어요. 🎉');
+      scheduleGen(showDivideStep, 700);
+    }
+  }
+
+  // ---------- divide phase (drag-and-drop dealing) ----------
+  function showDivideStep(){
+    state.phase='divide';
+    updateTracker('divide');
+    const a = state.leftA;
+    if(a===0){ handleDegenerate(); return; }
+    if(!Number.isInteger(a) || !Number.isInteger(state.rightB)){
+      showFractionalDivideFallback(a);
+      return;
+    }
+    if(Math.abs(a)===1){
+      clearManipPanel();
+      els.rightDealSlots.style.display='none';
+      if(a===1){
+        state.solution = state.rightB;
+        state.phase='solved';
+        updateTracker('solved');
+        renderGroupedSquares(1);
+        renderSolvedBanner();
+      } else {
+        setGuide('네모가 1개니까, 이미 정답을 알 수 있어요!');
+        scheduleGen(()=>finishDivision(1), 400);
+      }
+      return;
+    }
+    setupDealInteraction(Math.abs(a));
+  }
+
+  function handleDegenerate(){
+    clearManipPanel();
+    state.phase='solved';
+    updateTracker('solved');
+    if(state.leftB===state.rightB){
+      setGuide('이 방정식은 x가 무엇이든 항상 참이 돼요. <strong>해가 무수히 많아요!</strong>');
+      els.resultText.textContent='🤔 해가 무수히 많음';
+    } else {
+      setGuide('이 방정식은 항상 거짓이 돼요. <strong>해가 없어요.</strong>');
+      els.resultText.textContent='🤔 해가 없음';
+    }
+    els.resultBanner.style.display='block';
+  }
+
+  function setupDealInteraction(groups){
+    const total = Math.abs(state.rightB);
+    const neg = state.rightB<0;
+    const exactPossible = total % groups === 0;
+    dealState = {groups, neg, total, assignment:new Array(total).fill(null), exactPossible};
+    els.rightSquares.innerHTML='';
+    renderDealUI();
+    setGuide('왼쪽에 네모가 <strong>' + groups + '개</strong> 있어요. 동그라미를 <strong>드래그</strong>해서 ' + groups + '묶음에 똑같이 나눠 담아보세요!' + (exactPossible? '' : ' (이번엔 정확히 똑같이는 안 나누어질 수 있어요. 막히면 아래 버튼으로 답을 볼 수 있어요.)'));
+    setFeedback('');
+  }
+
+  function findDealDropTargetAt(x,y){
+    const el = document.elementFromPoint(x,y);
+    if(!el) return null;
+    const slotEl = el.closest('.circle-group-box');
+    if(slotEl && els.rightDealSlots.contains(slotEl)){
+      const idx = Array.from(els.rightDealSlots.children).indexOf(slotEl);
+      if(idx>=0) return {el:slotEl, slot:idx};
+    }
+    const poolEl = el.closest('#rightCircles');
+    if(poolEl) return {el:poolEl, slot:null};
+    return null;
+  }
+
+  function renderPoolCircles(){
+    els.rightCircles.innerHTML='';
+    for(let i=0;i<dealState.total;i++){
+      if(dealState.assignment[i]!==null) continue;
+      const c = createManip('circle', dealState.neg, false);
+      c.classList.add('draggable');
+      attachDrag(c, (target)=>{ dealState.assignment[i]=target.slot; renderDealUI(); }, findDealDropTargetAt);
+      els.rightCircles.appendChild(c);
+    }
+  }
+
+  function renderDealSlots(){
+    const wrap = els.rightDealSlots;
+    wrap.innerHTML='';
+    wrap.style.display='flex';
+    for(let g=0; g<dealState.groups; g++){
+      const box=document.createElement('div');
+      box.className='circle-group-box';
+      const dots=document.createElement('div');
+      dots.style.display='flex'; dots.style.flexWrap='wrap'; dots.style.gap='4px'; dots.style.justifyContent='center';
+      let countHere=0;
+      dealState.assignment.forEach((slot,i)=>{
+        if(slot===g){
+          countHere++;
+          const c=createManip('circle', dealState.neg, false);
+          c.classList.add('draggable');
+          attachDrag(c, (target)=>{ dealState.assignment[i]=target.slot; renderDealUI(); }, findDealDropTargetAt);
+          dots.appendChild(c);
+        }
+      });
+      box.appendChild(dots);
+      const idx=document.createElement('span');
+      idx.className='idx-badge';
+      idx.textContent=circledNum(g+1) + ' · ' + countHere + '개';
+      box.appendChild(idx);
+      wrap.appendChild(box);
+    }
+  }
+
+  function updateDealManipPanel(){
+    if(!dealState.exactPossible){
+      els.manipPanel.innerHTML='';
+      els.manipPanel.style.display='flex';
+      const btn=document.createElement('button');
+      btn.className='btn btn-ghost';
+      btn.textContent='어려우면 분수로 답 보기';
+      btn.addEventListener('click', ()=>{
+        els.rightDealSlots.style.display='none';
+        els.rightDealSlots.innerHTML='';
+        finishDivisionFraction();
+      });
+      els.manipPanel.appendChild(btn);
+    } else {
+      clearManipPanel();
+    }
+  }
+
+  function renderDealUI(){
+    renderPoolCircles();
+    renderDealSlots();
+    updateDealManipPanel();
+    checkDealProgress();
+  }
+
+  function checkDealProgress(){
+    const allPlaced = dealState.assignment.every(s=>s!==null);
+    if(!allPlaced){
+      const remaining = dealState.assignment.filter(s=>s===null).length;
+      setFeedback(remaining>0 ? ('풀에 동그라미 ' + remaining + '개가 더 있어요. 드래그해서 묶음에 옮겨보세요!') : '');
+      return;
+    }
+    const counts = new Array(dealState.groups).fill(0);
+    dealState.assignment.forEach(s=>counts[s]++);
+    const allEqual = counts.every(c=>c===counts[0]);
+    if(allEqual){
+      setFeedback('');
+      setGuide('잘 나눴어요! 묶음마다 ' + counts[0] + '개씩 똑같아요. 🎉');
+      clearManipPanel();
+      scheduleGen(()=>finishDivision(dealState.groups), 700);
+    } else {
+      setFeedback('아직 묶음마다 개수가 달라요. 동그라미를 옮겨서 똑같이 맞춰보세요!');
+    }
+  }
+
+  function finishDivision(divisor){
+    const a = state.leftA;
+    if(divisor>1){
+      addEqLine(joinSide(a,0) + ' ÷ ' + divisor + ' = ' + joinSide(0,state.rightB) + ' ÷ ' + divisor);
+    }
+    const x = state.rightB / a;
+    if(!(divisor===1 && a===1)){
+      addEqLine('x = ' + formatNumPlain(x));
+    }
+    state.solution = x;
+    state.phase='solved';
+    updateTracker('solved');
+    renderGroupedSquares(Math.abs(a));
+    renderSolvedBanner();
+  }
+
+  function finishDivisionFraction(){
+    const a = state.leftA, d = state.rightB;
+    const g = gcd(d,a);
+    let num=d/g, den=a/g;
+    if(den<0){ num=-num; den=-den; }
+    addEqLine(joinSide(a,0) + ' ÷ ' + Math.abs(a) + ' = ' + joinSide(0,d) + ' ÷ ' + Math.abs(a));
+    addEqLine('x = ' + num + '/' + den);
+    state.solution = d/a;
+    state.phase='solved';
+    updateTracker('solved');
+    renderGroupedSquares(Math.abs(a));
+    els.resultText.textContent = '🎉 x = ' + num + '/' + den;
+    els.resultBanner.style.display='block';
+    els.resultBanner.scrollIntoView({behavior:'smooth', block:'nearest'});
+  }
+
+  function showFractionalDivideFallback(a){
+    clearManipPanel();
+    setGuide('이번 방정식은 x의 계수가 소수/분수예요. 버튼을 눌러 계산으로 답을 구해볼까요?');
+    const btn=document.createElement('button');
+    btn.className='btn btn-primary';
+    btn.textContent='나누기 계산하기';
+    btn.addEventListener('click', ()=>{
+      addEqLine(joinSide(a,0) + ' ÷ ' + formatNumPlain(a) + ' = ' + joinSide(0,state.rightB) + ' ÷ ' + formatNumPlain(a));
+      const x = state.rightB/a;
+      addEqLine('x = ' + formatNumPlain(x));
+      state.solution = x;
+      state.phase='solved';
+      updateTracker('solved');
+      setGuide('계수가 소수/분수라서, 묶어서 나누는 대신 계산으로 바로 답을 구했어요. x = ' + formatNumPlain(x));
+      els.resultText.textContent = '🎉 x = ' + formatNumPlain(x);
+      els.resultBanner.style.display='block';
+      els.resultBanner.scrollIntoView({behavior:'smooth', block:'nearest'});
+    });
+    els.manipPanel.appendChild(btn);
+    els.manipPanel.style.display='flex';
+  }
+
+  function renderSolvedBanner(){
+    const disp = formatNumPlain(state.solution);
+    const unit = Number.isInteger(state.rightB/state.leftA) ? Math.abs(state.rightB/state.leftA) : disp;
+    setGuide('네모 1개 = 동그라미 ' + unit + '개와 같아요. 즉, <strong>x = ' + disp + '</strong> 입니다! 🎉');
+    els.resultText.textContent = '🎉 x = ' + disp;
+    els.resultBanner.style.display='block';
+    els.resultBanner.scrollIntoView({behavior:'smooth', block:'nearest'});
+  }
+
+  // ---------- reset ----------
+  function resetAll(){
+    stateGen++;
+    cancelActiveDrag();
+    state=null; dealState=null; placeState=null;
+    clearNotebook();
+    clearManipPanel();
+    setFeedback('');
+    setInputError('');
+    els.resultBanner.style.display='none';
+    els.leftSquares.innerHTML=''; els.leftCircles.innerHTML='';
+    els.rightSquares.innerHTML=''; els.rightCircles.innerHTML='';
+    els.leftBrackets.innerHTML=''; els.rightBrackets.innerHTML='';
+    els.rightDealSlots.innerHTML=''; els.rightDealSlots.style.display='none';
+    els.trayBox.innerHTML=''; els.trayCard.style.display='none';
+    toggleTag(els.leftXTag,false); toggleTag(els.leftCTag,false);
+    toggleTag(els.rightXTag,false); toggleTag(els.rightCTag,false);
+    updateTracker('idle');
+    setGuide('위에 일차방정식을 입력하고 <strong>문제 만들기</strong>를 눌러보세요!');
+    els.eqInput.value='';
+    els.eqInput.focus();
+  }
+
+  // ---------- wiring ----------
+  els.startBtn.addEventListener('click', handleStart);
+  els.eqInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter') handleStart(); });
+  els.resetBtn.addEventListener('click', resetAll);
+
+  updateTracker('idle');
+})();
+</script>
+</body>
+</html>
